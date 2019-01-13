@@ -1,17 +1,17 @@
 import haxe.crypto.Sha256;
-import instagram.Thread;
 import instagram.InboxPending;
-import instagram.Session;
+import instagram.Thread;
 
 using Utils;
 using haxe.Timer;
 
-class DirectApprover {
+class DirectApprover extends DirectBotComponent {
 
 	var inboxPending:InboxPending;
 
-	public function new(session:Session) {
-		inboxPending = new InboxPending(session);
+	public function new(bot:DirectBot) {
+		super(bot);
+		inboxPending = new InboxPending(bot.session);
 		get();
 	}
 
@@ -24,11 +24,11 @@ class DirectApprover {
 			thread.approve().catchError(Utils.log);
 			GA.event('pending', 'approve', Sha256.encode(thread.accounts[0].id));
 		}
-		get.delay(2.rand(3));
+		get.delayRand();
 	}
 
-	function error(e) {
-		Utils.log(e);
-		get.delay(2.rand(3));
+	function error(e:String) {
+		e.log();
+		get.delayRand();
 	}
 }

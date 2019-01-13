@@ -3,4 +3,4 @@
 -lib hxnodejs
 -D analyzer-optimize
 -main GetAvatar
--js iab.js
+-js get.avatar.js

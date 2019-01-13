@@ -11,6 +11,9 @@ class Utils {
 	public static inline function last<T>(array:Array<T>):T
 		return array[array.length - 1];
 
+	public static inline function isEmpty<T>(array:Array<T>):Bool
+		return array == null || array.length == 0;
+
 	public static inline function isNotEmpty<T>(array:Array<T>):Bool
 		return array != null && array.length > 0;
 
@@ -21,6 +24,9 @@ class Utils {
         return Std.int((base + Math.random() * vary) * 1000);
 
     public static inline function repeat(time:Int, run:Void -> Void)
-        return new Timer(time).run = run;
+        new Timer(time).run = run;
+
+	public static inline function delayRand(run:Void -> Void, base:Float = 2, time:Float = 3)
+		Timer.delay(run, rand(2, 3));
 
 }

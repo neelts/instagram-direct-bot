@@ -2,11 +2,12 @@ package ;
 
 import haxe.http.HttpNodeJs;
 
+using Utils;
 using sys.io.File;
 
 class GA {
 
-	static var request = {
+	static var request:HttpNodeJs = {
 		var http = new HttpNodeJs('http://www.google-analytics.com/collect');
 		http.addParameter('v', '1');
 		http.addParameter('tid', 'ga.id'.getContent());
@@ -16,7 +17,7 @@ class GA {
 	}
 
 	public static function event(category:String, action:String, user:String = '0'):Void {
-		Log.print('$category -> $action');
+		'$category -> $action'.log();
 		request.setParameter('cid', user);
 		request.setParameter('ec', category);
 		request.setParameter('ea', action);
