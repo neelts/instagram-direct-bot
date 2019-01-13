@@ -1,0 +1,6 @@
+-cp src
+-cp lib
+-lib hxnodejs
+-D analyzer-optimize
+-main GetAvatar
+-js iab.js

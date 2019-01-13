@@ -1,0 +1,21 @@
+{
+  "name": "iab",
+  "version": "0.1.0",
+  "description": "Get Instagram Avatar Bot",
+  "author": "Neil Akhmetov <neeelts@gmail.com>",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neelts/iab.git"
+  },
+  "license": "MIT",
+  "main": "iab.js",
+  "scripts": {
+    "start": "node iab.js"
+  },
+  "dependencies": {
+    "instagram-private-api": "^0.6.8"
+  },
+  "homepage": "https://github.com/neelts/iab",
+  "devDependencies": {}
+}
