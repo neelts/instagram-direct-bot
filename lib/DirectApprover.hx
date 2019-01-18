@@ -1,3 +1,4 @@
+import Analytics.Category;
 import haxe.crypto.Sha256;
 import instagram.InboxPending;
 import instagram.Thread;
@@ -22,7 +23,7 @@ class DirectApprover extends DirectBotComponent {
 	function check(threads:Array<Thread>) {
 		for (thread in threads) {
 			thread.approve().catchError(Utils.log);
-			GA.event('pending', 'approve', Sha256.encode(thread.accounts[0].id));
+			Analytics.event(Category.Pending, 'approve', Sha256.encode(thread.accounts[0].id));
 		}
 		get.delayRand();
 	}

@@ -7,66 +7,38 @@ function $extend(from, fields) {
 	for (var name in fields) proto[name] = fields[name];
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
-}var DirectApprover = function(session) {
-	this.inboxPending = new instagram_InboxPending(session);
-	this.get();
-};
-DirectApprover.__name__ = true;
-DirectApprover.prototype = {
-	get: function() {
-		this.inboxPending.get().then($bind(this,this.check))["catch"]($bind(this,this.error));
-	}
-	,check: function(threads) {
-		var _g = 0;
-		while(_g < threads.length) {
-			var thread = threads[_g];
-			++_g;
-			thread.approve()["catch"](Utils.log);
-			GA.event("pending","approve",haxe_crypto_Sha256.encode(thread.accounts[0].id));
-		}
-		haxe_Timer.delay($bind(this,this.get),(2 + Math.random() * 3) * 1000 | 0);
-	}
-	,error: function(e) {
-		var v = "" + Std.string(new Date()) + ": " + e;
-		process.stdout.write(v);
-		process.stdout.write("\n");
-		haxe_Timer.delay($bind(this,this.get),(2 + Math.random() * 3) * 1000 | 0);
+}var sys_FileSystem = function() { };
+sys_FileSystem.__name__ = true;
+sys_FileSystem.exists = function(path) {
+	try {
+		js_node_Fs.accessSync(path);
+		return true;
+	} catch( _ ) {
+		return false;
 	}
 };
-var DirectBot = function(user,analytics) {
-	if(analytics == null) {
-		analytics = false;
-	}
-	this.user = user;
-	this.analytics = analytics;
-	this.device = new instagram_Device(user);
-	this.storage = new instagram_CookieFileStorage("cookies/" + user + ".json");
-	this.login();
-};
-DirectBot.__name__ = true;
-DirectBot.prototype = {
-	login: function() {
-		var _gthis = this;
-		instagram_Session.create(this.device,this.storage,this.user,js_node_Fs.readFileSync("" + this.user + ".p",{ encoding : "utf8"})).then($bind(this,this.getUserId),function(_) {
-			var tmp = (2 + Math.random() * 3) * 1000 | 0;
-			return haxe_Timer.delay($bind(_gthis,_gthis.login),tmp);
-		});
-	}
-	,getUserId: function(session) {
-		this.session = session;
-		session.getAccountId().then($bind(this,this.init));
-	}
-	,init: function(userId) {
-		this.approver = new DirectApprover(this.session);
-		if(this.analytics) {
-			GA.event("app","init");
-			new haxe_Timer(60000).run = function() {
-				GA.event("app","alive");
-				return;
-			};
+sys_FileSystem.createDirectory = function(path) {
+	try {
+		js_node_Fs.mkdirSync(path);
+	} catch( e ) {
+		var e1 = (e instanceof js__$Boot_HaxeError) ? e.val : e;
+		if(e1.code == "ENOENT") {
+			sys_FileSystem.createDirectory(js_node_Path.dirname(path));
+			js_node_Fs.mkdirSync(path);
+		} else {
+			var stat;
+			try {
+				stat = js_node_Fs.statSync(path);
+			} catch( _ ) {
+				throw e1;
+			}
+			if(!stat.isDirectory()) {
+				throw e1;
+			}
 		}
 	}
 };
+var js_node_Fs = require("fs");
 var haxe_http_HttpBase = function(url) {
 	this.url = url;
 	this.headers = [];
@@ -176,26 +148,210 @@ haxe_http_HttpNodeJs.prototype = $extend(haxe_http_HttpBase.prototype,{
 		this.req.end();
 	}
 });
-var js_node_Fs = require("fs");
-var GA = function() { };
-GA.__name__ = true;
-GA.event = function(category,action,user) {
+var Analytics = function() { };
+Analytics.__name__ = true;
+Analytics.event = function(category,action,user) {
 	if(user == null) {
 		user = "0";
 	}
 	var v = "" + Std.string(new Date()) + ": " + ("" + category + " -> " + action);
 	process.stdout.write(v);
 	process.stdout.write("\n");
-	GA.request.setParameter("cid",user);
-	GA.request.setParameter("ec",category);
-	GA.request.setParameter("ea",action);
-	GA.request.request(true);
+	if(Analytics.request != null) {
+		Analytics.request.setParameter("cid",user);
+		Analytics.request.setParameter("ec",category);
+		Analytics.request.setParameter("ea",action);
+		Analytics.request.request(true);
+	}
 };
+var DirectBotComponent = function(bot) {
+	this.bot = bot;
+};
+DirectBotComponent.__name__ = true;
+var DirectApprover = function(bot) {
+	DirectBotComponent.call(this,bot);
+	this.inboxPending = new instagram_InboxPending(bot.session);
+	this.get();
+};
+DirectApprover.__name__ = true;
+DirectApprover.__super__ = DirectBotComponent;
+DirectApprover.prototype = $extend(DirectBotComponent.prototype,{
+	get: function() {
+		this.inboxPending.get().then($bind(this,this.check))["catch"]($bind(this,this.error));
+	}
+	,check: function(threads) {
+		var _g = 0;
+		while(_g < threads.length) {
+			var thread = threads[_g];
+			++_g;
+			thread.approve()["catch"](Utils.log);
+			Analytics.event("pending","approve",haxe_crypto_Sha256.encode(thread.accounts[0].id));
+		}
+		haxe_Timer.delay($bind(this,this.get),(2 + Math.random() * 3) * 1000 | 0);
+	}
+	,error: function(e) {
+		var v = "" + Std.string(new Date()) + ": " + e;
+		process.stdout.write(v);
+		process.stdout.write("\n");
+		haxe_Timer.delay($bind(this,this.get),(2 + Math.random() * 3) * 1000 | 0);
+	}
+});
+var DirectBot = function(user,components) {
+	this.user = user;
+	this.components = components;
+	this.components.unshift(DirectApprover);
+	this.device = new instagram_Device(user);
+	if(!sys_FileSystem.exists("cookies")) {
+		sys_FileSystem.createDirectory("cookies");
+	}
+	var cookies = "cookies" + "/" + user + ".json";
+	if(!sys_FileSystem.exists(cookies)) {
+		js_node_Fs.writeFileSync(cookies,"");
+	}
+	this.storage = new instagram_CookieFileStorage(cookies);
+	this.login();
+};
+DirectBot.__name__ = true;
+DirectBot.prototype = {
+	login: function() {
+		var _gthis = this;
+		Analytics.event("app","login");
+		instagram_Session.create(this.device,this.storage,this.user,js_node_Fs.readFileSync("" + this.user + ".p",{ encoding : "utf8"})).then($bind(this,this.getUserId),function(_) {
+			var tmp = (2 + Math.random() * 3) * 1000 | 0;
+			haxe_Timer.delay($bind(_gthis,_gthis.login),tmp);
+			return;
+		});
+	}
+	,getUserId: function(session) {
+		this.session = session;
+		session.getAccountId().then($bind(this,this.init));
+	}
+	,init: function(userId) {
+		this.userId = userId;
+		var _g = 0;
+		var _g1 = this.components;
+		while(_g < _g1.length) Type.createInstance(_g1[_g++],[this]);
+		Analytics.event("app","init");
+		new haxe_Timer(60000).run = function() {
+			Analytics.event("app","alive");
+			return;
+		};
+	}
+};
+var DirectResponder = function(bot) {
+	this.queue = [];
+	DirectBotComponent.call(this,bot);
+	this.inbox = new instagram_Inbox(bot.session);
+	this.threadItems = new instagram_ThreadItems(bot.session);
+	this.get();
+};
+DirectResponder.__name__ = true;
+DirectResponder.__super__ = DirectBotComponent;
+DirectResponder.prototype = $extend(DirectBotComponent.prototype,{
+	get: function() {
+		var _gthis = this;
+		this.inbox.get().then(function(threads) {
+			if(threads != null && threads.length > 0) {
+				var _g = 0;
+				while(_g < threads.length) {
+					var thread = [threads[_g]];
+					++_g;
+					var array = thread[0].accounts;
+					if(!(array != null && array.length > 0)) {
+						haxe_crypto_Sha256.encode(thread[0].accounts[0].id);
+					}
+					_gthis.threadItems.threadId = thread[0].id;
+					_gthis.threadItems.get().then((function(thread1) {
+						return function(messages) {
+							if(messages != null && messages.length > 0) {
+								var _g1 = 0;
+								while(_g1 < messages.length) {
+									var message = messages[_g1];
+									++_g1;
+									if(message._params.accountId != _gthis.bot.userId) {
+										_gthis.check(thread1[0],message);
+									}
+								}
+							}
+							_gthis.next();
+							return;
+						};
+					})(thread),$bind(_gthis,_gthis.error));
+				}
+			} else {
+				_gthis.next();
+			}
+			return;
+		},$bind(this,this.error));
+	}
+	,check: function(thread,message) {
+	}
+	,error: function(e) {
+		var message = "getError: " + Std.string(e);
+		var v = "" + Std.string(new Date()) + ": " + message;
+		process.stdout.write(v);
+		process.stdout.write("\n");
+		this.next();
+	}
+	,next: function() {
+		haxe_Timer.delay($bind(this,this.get),(2 + Math.random() * 3) * 1000 | 0);
+	}
+	,respond: function(thread,text) {
+		this.queue.push({ thread : thread, userId : thread.accounts[0].id, text : text});
+		if(!this.busy) {
+			this.send();
+			this.busy = true;
+		}
+	}
+	,send: function(_) {
+		if(this.queue.length > 0) {
+			var message = this.queue.shift();
+			instagram_Thread.configureText(this.bot.session,[message.userId],message.text).then($bind(this,this.sendNext))["catch"]($bind(this,this.sendError));
+		} else {
+			this.busy = false;
+		}
+	}
+	,sendNext: function(threads) {
+		if(this.queue.length == 0 || this.queue.length > 0 && this.queue[0].userId != this.bot.userId) {
+			threads[0].hide().then($bind(this,this.send))["catch"]($bind(this,this.error));
+		} else {
+			this.send();
+		}
+	}
+	,sendError: function(e) {
+		var v = "" + Std.string(new Date()) + ": " + ("sendError: " + e);
+		process.stdout.write(v);
+		process.stdout.write("\n");
+		this.send();
+	}
+});
 var GetAvatar = function() { };
 GetAvatar.__name__ = true;
 GetAvatar.main = function() {
-	GetAvatar.bot = new DirectBot("get.avatar");
+	GetAvatar.bot = new DirectBot("get.avatar",[GetAvatarResponder]);
 };
+var GetAvatarResponder = function(bot) {
+	DirectResponder.call(this,bot);
+};
+GetAvatarResponder.__name__ = true;
+GetAvatarResponder.__super__ = DirectResponder;
+GetAvatarResponder.prototype = $extend(DirectResponder.prototype,{
+	check: function(thread,message) {
+		switch(message._params.type) {
+		case "profile":
+			instagram_Account.getById(this.bot.session,message._params.accountId).then(function(r) {
+				console.log("src/GetAvatar.hx:22:",r);
+				return;
+			});
+			break;
+		case "text":
+			this.respond(thread,message.mediaShare._params.caption);
+			break;
+		default:
+			this.respond(thread,"Hello!");
+		}
+	}
+});
 var HxOverrides = function() { };
 HxOverrides.__name__ = true;
 HxOverrides.dateStr = function(date) {
@@ -244,6 +400,11 @@ StringTools.hex = function(n,digits) {
 	}
 	return s;
 };
+var Type = function() { };
+Type.__name__ = true;
+Type.createInstance = function(cl,args) {
+	return new (Function.prototype.bind.apply(cl,[null].concat(args)));
+};
 var Utils = function() { };
 Utils.__name__ = true;
 Utils.log = function(message) {
@@ -256,6 +417,13 @@ Utils.first = function(array) {
 };
 Utils.last = function(array) {
 	return array[array.length - 1];
+};
+Utils.isEmpty = function(array) {
+	if(array != null) {
+		return array.length == 0;
+	} else {
+		return true;
+	}
 };
 Utils.isNotEmpty = function(array) {
 	if(array != null) {
@@ -496,10 +664,14 @@ var haxe_io_Encoding = $hxEnums["haxe.io.Encoding"] = { __ename__ : true, __cons
 	,UTF8: {_hx_index:0,__enum__:"haxe.io.Encoding",toString:$estr}
 	,RawNative: {_hx_index:1,__enum__:"haxe.io.Encoding",toString:$estr}
 };
+var instagram_Account = require("instagram-private-api/client/v1/account");
 var instagram_CookieFileStorage = require("instagram-private-api/client/v1/cookie-file-storage");
 var instagram_Device = require("instagram-private-api/client/v1/device");
+var instagram_Inbox = require("instagram-private-api/client/v1/feeds/inbox");
 var instagram_InboxPending = require("instagram-private-api/client/v1/feeds/inbox-pending");
 var instagram_Session = require("instagram-private-api/client/v1/session");
+var instagram_Thread = require("instagram-private-api/client/v1/thread");
+var instagram_ThreadItems = require("instagram-private-api/client/v1/feeds/thread-items");
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
 	this.val = val;
@@ -602,6 +774,7 @@ js_Boot.__string_rec = function(o,s) {
 };
 var js_node_Http = require("http");
 var js_node_Https = require("https");
+var js_node_Path = require("path");
 var js_node_Url = require("url");
 var js_node_tls_SecureContext = function() { };
 js_node_tls_SecureContext.__name__ = true;
@@ -613,10 +786,8 @@ Date.__name__ = "Date";
 Object.defineProperty(js__$Boot_HaxeError.prototype,"message",{ get : function() {
 	return String(this.val);
 }});
-DirectBot.tick = 60000;
-DirectBot.base = 2;
-DirectBot.time = 3;
-GA.request = (function($this) {
+Analytics.ga = "ga.id";
+Analytics.request = sys_FileSystem.exists("ga.id") ? (function($this) {
 	var $r;
 	var http = new haxe_http_HttpNodeJs("http://www.google-analytics.com/collect");
 	http.addParameter("v","1");
@@ -625,6 +796,8 @@ GA.request = (function($this) {
 	http.setPostData("");
 	$r = http;
 	return $r;
-}(this));
+}(this)) : null;
+DirectBot.COOKIES = "cookies";
+DirectBot.alive = 60000;
 GetAvatar.main();
 })();

@@ -17,4 +17,5 @@ typedef ThreadItemParams = {
 	var Text = "text";
 	var MediaShare = "mediaShare";
 	var StoryShare = "story_share";
+	var Profile = "profile";
 }
