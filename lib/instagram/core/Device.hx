@@ -1,4 +1,4 @@
-package instagram;
+package instagram.core;
 
 @:jsRequire("instagram-private-api/client/v1/device")
 extern class Device {

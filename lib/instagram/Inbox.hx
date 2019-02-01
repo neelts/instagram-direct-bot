@@ -1,5 +1,7 @@
 package instagram;
 
+import instagram.core.Session;
+import instagram.thread.Thread;
 import js.Promise;
 
 @:jsRequire("instagram-private-api/client/v1/feeds/inbox")

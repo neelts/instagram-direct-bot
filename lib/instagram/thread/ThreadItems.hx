@@ -1,5 +1,6 @@
-package instagram;
+package instagram.thread;
 
+import instagram.core.Session;
 import js.Promise;
 
 @:jsRequire("instagram-private-api/client/v1/feeds/thread-items")

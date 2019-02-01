@@ -1,4 +1,4 @@
-package instagram;
+package instagram.core;
 
 import js.Promise;
 

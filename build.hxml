@@ -1,6 +1,5 @@
 -cp src
 -cp lib
 -lib hxnodejs
--D analyzer-optimize
 -main GetAvatar
 -js get.avatar.js

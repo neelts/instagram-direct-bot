@@ -1,5 +1,7 @@
-package instagram;
+package instagram.thread;
 
+import instagram.core.Session;
+import instagram.account.Account;
 import js.Promise;
 
 @:jsRequire("instagram-private-api/client/v1/thread")
