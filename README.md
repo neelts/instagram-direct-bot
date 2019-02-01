@@ -16,5 +16,5 @@ https://www.instagram.com/get.avatar
 ## Also my bot with closed source:
 https://www.instagram.com/get.texts
 
-Responds with found links, emails, phones and text to any post or story which contains written text
+Responds with found links, emails, phones and text to any post or story which contains written text.
 Solves that you can't copy any text in Instagram.
