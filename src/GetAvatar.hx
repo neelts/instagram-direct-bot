@@ -1,9 +1,9 @@
 package;
 
+import instagram.thread.Thread;
 import instagram.thread.ThreadItem;
 import instagram.thread.ItemType;
 import instagram.account.Account;
-import neko.vm.Thread;
 
 class GetAvatar {
 

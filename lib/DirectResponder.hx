@@ -1,9 +1,9 @@
 package ;
+import instagram.thread.ThreadItem;
+import instagram.thread.Thread;
 import haxe.crypto.Sha256;
 import instagram.Inbox;
-import instagram.Thread;
-import instagram.ThreadItem;
-import instagram.ThreadItems;
+import instagram.thread.ThreadItems;
 
 using Utils;
 

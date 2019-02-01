@@ -1,7 +1,7 @@
+import instagram.thread.Thread;
 import Analytics.Category;
 import haxe.crypto.Sha256;
 import instagram.InboxPending;
-import instagram.Thread;
 
 using Utils;
 using haxe.Timer;

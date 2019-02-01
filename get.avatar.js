@@ -203,7 +203,7 @@ var DirectBot = function(user,components) {
 	this.user = user;
 	this.components = components;
 	this.components.unshift(DirectApprover);
-	this.device = new instagram_Device(user);
+	this.device = new instagram_core_Device(user);
 	if(!sys_FileSystem.exists("cookies")) {
 		sys_FileSystem.createDirectory("cookies");
 	}
@@ -211,7 +211,7 @@ var DirectBot = function(user,components) {
 	if(!sys_FileSystem.exists(cookies)) {
 		js_node_Fs.writeFileSync(cookies,"");
 	}
-	this.storage = new instagram_CookieFileStorage(cookies);
+	this.storage = new instagram_core_CookieFileStorage(cookies);
 	this.login();
 };
 DirectBot.__name__ = true;
@@ -219,7 +219,7 @@ DirectBot.prototype = {
 	login: function() {
 		var _gthis = this;
 		Analytics.event("app","login");
-		instagram_Session.create(this.device,this.storage,this.user,js_node_Fs.readFileSync("" + this.user + ".p",{ encoding : "utf8"})).then($bind(this,this.getUserId),function(_) {
+		instagram_core_Session.create(this.device,this.storage,this.user,js_node_Fs.readFileSync("" + this.user + ".p",{ encoding : "utf8"})).then($bind(this,this.getUserId),function(_) {
 			var tmp = (2 + Math.random() * 3) * 1000 | 0;
 			haxe_Timer.delay($bind(_gthis,_gthis.login),tmp);
 			return;
@@ -249,7 +249,7 @@ var DirectResponder = function(bot) {
 	this.queue = [];
 	DirectBotComponent.call(this,bot);
 	this.inbox = new instagram_Inbox(bot.session);
-	this.threadItems = new instagram_ThreadItems(bot.session);
+	this.threadItems = new instagram_thread_ThreadItems(bot.session);
 	this.get();
 };
 DirectResponder.__name__ = true;
@@ -311,7 +311,7 @@ DirectResponder.prototype = $extend(DirectBotComponent.prototype,{
 	,send: function(_) {
 		if(this.queue.length > 0) {
 			var message = this.queue.shift();
-			instagram_Thread.configureText(this.bot.session,[message.userId],message.text).then($bind(this,this.sendNext))["catch"]($bind(this,this.sendError));
+			instagram_thread_Thread.configureText(this.bot.session,[message.userId],message.text).then($bind(this,this.sendNext))["catch"]($bind(this,this.sendError));
 		} else {
 			this.busy = false;
 		}
@@ -356,47 +356,46 @@ GetAvatarResponder.__name__ = true;
 GetAvatarResponder.__super__ = DirectResponder;
 GetAvatarResponder.prototype = $extend(DirectResponder.prototype,{
 	check: function(thread,message) {
-		var _gthis = this;
 		var _g = message._params.type;
 		switch(_g) {
 		case "profile":
 			this.searchByIdAndSend(thread,message._params.profile.pk);
 			break;
 		case "text":
-			var username = message._params.text;
-			if(new EReg("@[a-z0-9\\._]+","").match(username)) {
-				instagram_account_Account.search(this.bot.session,username).then(function(accounts) {
-					if(accounts != null && accounts.length > 0) {
-						_gthis.searchByIdAndSend(thread,accounts[0].id);
-					} else {
-						_gthis.respond(thread,"❌");
-					}
-					return;
-				},function(e) {
-					_gthis.respond(thread,e);
-					return;
-				});
-			} else {
-				this.respond(thread,"➡ @username!");
-			}
+			this.checkUserNameAndSearch(thread,message._params.text);
 			break;
 		default:
 			this.respond(thread,"❓");
 		}
 	}
+	,checkUserNameAndSearch: function(thread,username) {
+		var _gthis = this;
+		if(new EReg("@[a-z0-9\\._]+","").match(username)) {
+			instagram_account_Account.search(this.bot.session,username).then(function(accounts) {
+				if(accounts != null && accounts.length > 0) {
+					_gthis.searchByIdAndSend(thread,accounts[0].id);
+				} else {
+					_gthis.respond(thread,"❌");
+				}
+				return;
+			},function(e) {
+				_gthis.respond(thread,e);
+				return;
+			});
+		} else {
+			this.respond(thread,"➡ @username!");
+		}
+	}
 	,searchByIdAndSend: function(thread,id) {
 		var _gthis = this;
 		instagram_account_Account.getById(this.bot.session,id).then(function(account) {
-			_gthis.sendBestPicture(thread,account);
+			var hd = account._params.hdProfilePicUrlInfo;
+			_gthis.respond(thread,hd != null ? hd.url : account._params.picture);
 			return;
 		},function(e) {
 			_gthis.respond(thread,e);
 			return;
 		});
-	}
-	,sendBestPicture: function(thread,account) {
-		var hd = account._params.hdProfilePicUrlInfo;
-		this.respond(thread,hd != null ? hd.url : account._params.picture);
 	}
 });
 var HxOverrides = function() { };
@@ -758,14 +757,14 @@ haxe_io_Bytes.ofString = function(s) {
 	}
 	return new haxe_io_Bytes(new Uint8Array(a).buffer);
 };
-var instagram_CookieFileStorage = require("instagram-private-api/client/v1/cookie-file-storage");
-var instagram_Device = require("instagram-private-api/client/v1/device");
 var instagram_Inbox = require("instagram-private-api/client/v1/feeds/inbox");
 var instagram_InboxPending = require("instagram-private-api/client/v1/feeds/inbox-pending");
-var instagram_Session = require("instagram-private-api/client/v1/session");
-var instagram_Thread = require("instagram-private-api/client/v1/thread");
-var instagram_ThreadItems = require("instagram-private-api/client/v1/feeds/thread-items");
 var instagram_account_Account = require("instagram-private-api/client/v1/account");
+var instagram_core_CookieFileStorage = require("instagram-private-api/client/v1/cookie-file-storage");
+var instagram_core_Device = require("instagram-private-api/client/v1/device");
+var instagram_core_Session = require("instagram-private-api/client/v1/session");
+var instagram_thread_Thread = require("instagram-private-api/client/v1/thread");
+var instagram_thread_ThreadItems = require("instagram-private-api/client/v1/feeds/thread-items");
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
 	this.val = val;
