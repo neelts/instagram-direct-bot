@@ -5,6 +5,10 @@ Responds to:
 - Shared profile
 - @Username
 
+## How to build:
+- Install IDEA CE, Haxe plugin for IDEA, Haxe 4 RC, NodeJS
+- Checkout, run: haxelib install build.hxml && npm install
+
 ## How to test:
 - Create yourbotname.p with account password
 - Change 'get.avatar' to 'yourbotname'
