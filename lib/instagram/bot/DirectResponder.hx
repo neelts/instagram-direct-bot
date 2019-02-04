@@ -1,8 +1,7 @@
-package ;
-import instagram.thread.ThreadItem;
-import instagram.thread.Thread;
+package instagram.bot;
 import haxe.crypto.Sha256;
-import instagram.Inbox;
+import instagram.thread.Thread;
+import instagram.thread.ThreadItem;
 import instagram.thread.ThreadItems;
 
 using Utils;
@@ -15,7 +14,7 @@ class DirectResponder extends DirectBotComponent {
 	var inbox:Inbox;
 	var threadItems:ThreadItems;
 
-	public function new(bot:DirectBot) {
+	@:keep public function new(bot:DirectBot) {
 		super(bot);
 		inbox = new Inbox(bot.session);
 		threadItems = new ThreadItems(bot.session);
@@ -41,7 +40,7 @@ class DirectResponder extends DirectBotComponent {
 		// Override
 	}
 
-	function error(e:Any) {
+	function error(e:Any):Void {
 		Utils.log('getError: ' + e);
 		next();
 	}

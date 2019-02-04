@@ -1,4 +1,4 @@
-package ;
+package instagram.bot;
 class DirectBotComponent {
 
 	var bot:DirectBot;

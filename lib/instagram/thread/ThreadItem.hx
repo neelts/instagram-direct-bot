@@ -1,5 +1,6 @@
 package instagram.thread;
 
+import instagram.core.Params;
 import instagram.media.Media;
 import instagram.media.Profile;
 import instagram.media.Story;

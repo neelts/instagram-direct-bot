@@ -1,5 +1,6 @@
 package instagram.account;
 
+import instagram.core.Params;
 import instagram.core.Session;
 import js.Promise;
 

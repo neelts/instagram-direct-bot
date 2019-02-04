@@ -1,7 +1,7 @@
-import instagram.thread.Thread;
-import Analytics.Category;
+package instagram.bot;
+import google.Analytics;
 import haxe.crypto.Sha256;
-import instagram.InboxPending;
+import instagram.thread.Thread;
 
 using Utils;
 using haxe.Timer;
@@ -10,7 +10,7 @@ class DirectApprover extends DirectBotComponent {
 
 	var inboxPending:InboxPending;
 
-	public function new(bot:DirectBot) {
+	@:keep public function new(bot:DirectBot) {
 		super(bot);
 		inboxPending = new InboxPending(bot.session);
 		get();

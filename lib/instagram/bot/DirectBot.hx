@@ -1,16 +1,16 @@
-package;
+package instagram.bot;
 
+import google.Analytics;
 import instagram.core.Session;
 import instagram.core.Device;
 import instagram.core.CookieFileStorage;
-import Analytics.Category;
 
 using sys.io.File;
 using sys.FileSystem;
 using Utils;
 using haxe.Timer;
 
-@:allow(DirectBotComponent)
+@:allow(instagram.bot.DirectBotComponent)
 class DirectBot {
 
 	static inline var COOKIES:String = 'cookies';

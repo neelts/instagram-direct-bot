@@ -1,5 +1,7 @@
 package;
 
+import instagram.bot.DirectBot;
+import instagram.bot.DirectResponder;
 import instagram.thread.Thread;
 import instagram.thread.ThreadItem;
 import instagram.thread.ItemType;

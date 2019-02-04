@@ -1,4 +1,4 @@
-package instagram;
+package instagram.core;
 
 extern class Params<T> {
 	var _params:T;
