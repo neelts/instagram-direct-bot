@@ -28,13 +28,17 @@ class GetAvatarResponder extends DirectResponder {
 
 	private function checkUserNameAndSearch(thread:Thread, username:String):Void {
 		if (~/@[a-z0-9\._]+/.match(username)) {
+			username = username.substr(1);
 			Account.search(bot.session, username).then(
 				(accounts:Array<Account>) -> {
 					if (accounts != null && accounts.length > 0) {
-						searchByIdAndSend(thread, accounts[0].id);
-					} else respond(thread, "❌");
-				},
-				e -> respond(thread, e)
+						for (account in accounts) if (account.params.username == username) {
+							searchByIdAndSend(thread, account.id);
+							return;
+						}
+					}
+					respond(thread, "❌");
+				}, e -> respond(thread, e)
 			);
 		} else respond(thread, '➡ @username!');
 	}
@@ -44,8 +48,7 @@ class GetAvatarResponder extends DirectResponder {
 			(account:Account) -> {
 				var hd = account.params.hdProfilePicUrlInfo;
 				respond(thread, hd != null ? hd.url : account.params.picture);
-			},
-			e -> respond(thread, e)
+			}, e -> respond(thread, e)
 		);
 	}
 }

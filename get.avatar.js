@@ -137,12 +137,20 @@ GetAvatarResponder.prototype = $extend(instagram_bot_DirectResponder.prototype,{
 	,checkUserNameAndSearch: function(thread,username) {
 		var _gthis = this;
 		if(new EReg("@[a-z0-9\\._]+","").match(username)) {
+			username = HxOverrides.substr(username,1,null);
 			instagram_account_Account.search(this.bot.session,username).then(function(accounts) {
 				if(accounts != null && accounts.length > 0) {
-					_gthis.searchByIdAndSend(thread,accounts[0].id);
-				} else {
-					_gthis.respond(thread,"❌");
+					var _g = 0;
+					while(_g < accounts.length) {
+						var account = accounts[_g];
+						++_g;
+						if(account._params.username == username) {
+							_gthis.searchByIdAndSend(thread,account.id);
+							return;
+						}
+					}
 				}
+				_gthis.respond(thread,"❌");
 				return;
 			},function(e) {
 				_gthis.respond(thread,e);
@@ -173,6 +181,18 @@ HxOverrides.dateStr = function(date) {
 	var mi = date.getMinutes();
 	var s = date.getSeconds();
 	return date.getFullYear() + "-" + (m < 10 ? "0" + m : "" + m) + "-" + (d < 10 ? "0" + d : "" + d) + " " + (h < 10 ? "0" + h : "" + h) + ":" + (mi < 10 ? "0" + mi : "" + mi) + ":" + (s < 10 ? "0" + s : "" + s);
+};
+HxOverrides.substr = function(s,pos,len) {
+	if(len == null) {
+		len = s.length;
+	} else if(len < 0) {
+		if(pos == 0) {
+			len = s.length + len;
+		} else {
+			return "";
+		}
+	}
+	return s.substr(pos,len);
 };
 Math.__name__ = true;
 var Reflect = function() { };
